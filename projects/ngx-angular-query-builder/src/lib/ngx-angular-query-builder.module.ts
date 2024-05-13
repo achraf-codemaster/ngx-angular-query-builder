@@ -13,9 +13,12 @@ import { QueryButtonGroupDirective } from "./query-builder/query-button-group.di
 import { QuerySwitchGroupDirective } from "./query-builder/query-switch-group.directive";
 import { QueryRemoveButtonDirective } from "./query-builder/query-remove-button.directive";
 import { QueryEmptyWarningDirective } from "./query-builder/query-empty-warning.directive";
+import { QueryDragHandlerDirective } from "./query-builder/query-drag-handler.directive";
+import { DndModule } from "ngx-drag-drop";
+import { QueryDndPlaceholderDirective } from "./query-builder/query-dnd-placeholder.directive";
 
 @NgModule({
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DndModule],
   declarations: [
     QueryBuilderComponent,
     QueryInputDirective,
@@ -26,7 +29,9 @@ import { QueryEmptyWarningDirective } from "./query-builder/query-empty-warning.
     QuerySwitchGroupDirective,
     QueryRemoveButtonDirective,
     QueryEmptyWarningDirective,
-    QueryArrowIconDirective
+    QueryArrowIconDirective,
+    QueryDragHandlerDirective,
+    QueryDndPlaceholderDirective
   ],
   exports: [
     QueryBuilderComponent,
@@ -38,7 +43,9 @@ import { QueryEmptyWarningDirective } from "./query-builder/query-empty-warning.
     QuerySwitchGroupDirective,
     QueryRemoveButtonDirective,
     QueryEmptyWarningDirective,
-    QueryArrowIconDirective
+    QueryArrowIconDirective,
+    QueryDragHandlerDirective,
+    QueryDndPlaceholderDirective
   ]
 })
 export class NgxAngularQueryBuilderModule {}

@@ -32,7 +32,8 @@ import {
   ArrowIconContext,
   Rule,
   RuleSet,
-  EmptyWarningContext
+  EmptyWarningContext,
+  DragHandlerContext
 } from "./query-builder.interfaces";
 import {
   ChangeDetectorRef,
@@ -50,6 +51,10 @@ import {
   ElementRef,
   HostBinding
 } from "@angular/core";
+import { QueryDragHandlerDirective } from "./query-drag-handler.directive";
+import { DndDropEvent } from "ngx-drag-drop";
+import { QueryBuilderFactoryService } from "./query-builder-factory.service";
+import { QueryDndPlaceholderDirective } from "./query-dnd-placeholder.directive";
 
 export const CONTROL_VALUE_ACCESSOR: any = {
   provide: NG_VALUE_ACCESSOR,
@@ -102,7 +107,9 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
     operatorControl: "q-operator-control",
     operatorControlSize: "q-control-size",
     inputControl: "q-input-control",
-    inputControlSize: "q-control-size"
+    inputControlSize: "q-control-size",
+    dragHandlerControlSize: "q-drag-handler-size",
+    dndPlaceholder: "q-dnd-placeholder"
   };
   public defaultOperatorMap: { [key: string]: string[] } = {
     string: ["=", "!=", "contains", "like"],
@@ -129,6 +136,7 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
   @Input() classNames: QueryBuilderClassNames = {};
   @Input() operatorMap: { [key: string]: string[] } = {};
   @Input() parentValue?: RuleSet;
+  @Input() mainValue?: RuleSet;
   @Input() config: QueryBuilderConfig = { fields: {} };
   @Input() parentArrowIconTemplate!: QueryArrowIconDirective;
   @Input() parentInputTemplates!: QueryList<QueryInputDirective>;
@@ -139,6 +147,8 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
   @Input() parentButtonGroupTemplate!: QueryButtonGroupDirective;
   @Input() parentRemoveButtonTemplate!: QueryRemoveButtonDirective;
   @Input() parentEmptyWarningTemplate!: QueryEmptyWarningDirective;
+  @Input() parentDragHandlerTemplate!: QueryDragHandlerDirective;
+  @Input() parentDndPlaceholderTemplate!: QueryDragHandlerDirective;
   @Input() parentChangeCallback!: () => void;
   @Input() parentTouchedCallback!: () => void;
   @Input() persistValueOnFieldChange = false;
@@ -161,6 +171,10 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
   inputTemplates!: QueryList<QueryInputDirective>;
   @ContentChild(QueryArrowIconDirective)
   arrowIconTemplate!: QueryArrowIconDirective;
+  @ContentChild(QueryDragHandlerDirective)
+  dragHandlerTemplate!: QueryDragHandlerDirective;
+  @ContentChild(QueryDndPlaceholderDirective)
+  dndPlaceholderTemplate!: QueryDndPlaceholderDirective;
 
   private defaultTemplateTypes: string[] = [
     "string",
@@ -181,7 +195,10 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
   private removeButtonContextCache = new Map<Rule, RemoveButtonContext>();
   private buttonGroupContext!: ButtonGroupContext;
 
-  constructor(private changeDetectorRef: ChangeDetectorRef) {
+  constructor(
+    private changeDetectorRef: ChangeDetectorRef,
+    private queryBuilderFactoryService: QueryBuilderFactoryService
+  ) {
     this.fields = [];
     this.filterFields = [];
     this.entities = [];
@@ -457,6 +474,36 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
     this.handleDataChange();
   }
 
+  moveRule({ data, index }: DndDropEvent, targetId: number) {
+    if (typeof data === "object") {
+      this.queryBuilderFactoryService.removeRuleById(this.mainValue || this.data, data.id);
+    } else {
+      const field: Field = this.fields.find((field) => field.value === data) as Field;
+
+      data = {
+        field: field.value as string,
+        operator: this.getDefaultOperator(field) as string,
+        value: this.getDefaultValue(field.defaultValue),
+        entity: field.entity
+      };
+    }
+    this.queryBuilderFactoryService.placeRuleInRuleSet(
+      this.mainValue || this.data,
+      data,
+      targetId,
+      index
+    );
+
+    this.inputContextCache.delete(data);
+    this.operatorContextCache.delete(data);
+    this.fieldContextCache.delete(data);
+    this.entityContextCache.delete(data);
+    this.removeButtonContextCache.delete(data);
+
+    this.handleTouched();
+    this.handleDataChange();
+  }
+
   addRuleSet(parent?: RuleSet): void {
     if (this.disabled) {
       return;
@@ -655,6 +702,16 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
     return t ? t.template : null;
   }
 
+  getDragHandlerTemplate(): TemplateRef<any> | null {
+    const t = this.parentDragHandlerTemplate || this.dragHandlerTemplate;
+    return t ? t.template : null;
+  }
+
+  getDndPlaceholderTemplate(): TemplateRef<any> | null {
+    const t = this.parentDndPlaceholderTemplate || this.dndPlaceholderTemplate;
+    return t ? t.template : null;
+  }
+
   getQueryItemClassName(local: LocalRuleMeta): string {
     let cls = this.getClassNames("row", "connector", "transition");
     cls += " " + this.getClassNames(local.ruleset ? "ruleSet" : "rule");
@@ -762,6 +819,12 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
     return this.inputContextCache.get(rule) as InputContext;
   }
 
+  getDragHandlerContext(): DragHandlerContext {
+    return {
+      $implicit: this.data
+    };
+  }
+
   private calculateFieldChangeValue(currentField: Field, nextField: Field, currentValue: any): any {
     if (this.config.calculateFieldChangeValue != null) {
       return this.config.calculateFieldChangeValue(currentField, nextField, currentValue);
@@ -821,6 +884,8 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
   }
 
   private handleDataChange(): void {
+    this.data = this.queryBuilderFactoryService.addUniqueIds(this.data);
+
     this.changeDetectorRef.markForCheck();
     if (this.onChangeCallback) {
       this.onChangeCallback();
@@ -837,5 +902,9 @@ export class QueryBuilderComponent implements OnChanges, ControlValueAccessor, V
     if (this.parentTouchedCallback) {
       this.parentTouchedCallback();
     }
+  }
+
+  onDrop(event: DndDropEvent, targetId: number = 0) {
+    this.moveRule(event, targetId);
   }
 }

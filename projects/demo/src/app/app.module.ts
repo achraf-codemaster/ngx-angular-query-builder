@@ -16,6 +16,7 @@ import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { NgxAngularQueryBuilderModule } from "projects/ngx-angular-query-builder/src/public-api";
 
 import { AppComponent } from "./app.component";
+import { DndModule } from "ngx-drag-drop";
 
 @NgModule({
   declarations: [AppComponent],
@@ -34,7 +35,8 @@ import { AppComponent } from "./app.component";
     MatNativeDateModule,
     MatButtonModule,
     BrowserAnimationsModule,
-    NgxAngularQueryBuilderModule
+    NgxAngularQueryBuilderModule,
+    DndModule
   ],
   providers: [],
   bootstrap: [AppComponent]

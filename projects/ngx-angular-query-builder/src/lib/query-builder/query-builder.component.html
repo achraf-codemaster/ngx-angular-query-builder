@@ -92,7 +92,20 @@
   (transitionend)="transitionEnd($event)"
   [ngClass]="getClassNames('treeContainer', data.collapsed ? 'collapsed' : '')"
 >
-  <ul [ngClass]="getClassNames('tree')" *ngIf="data && data.rules">
+  <ul
+    [ngClass]="getClassNames('tree')"
+    *ngIf="data && data.rules"
+    dndDropzone
+    (dndDrop)="onDrop($event, data.id)"
+  >
+    <ng-container *ngIf="getDndPlaceholderTemplate() as template; else defaultDndPlaceholder">
+      <ng-container *ngTemplateOutlet="template"></ng-container>
+    </ng-container>
+
+    <ng-template #defaultDndPlaceholder>
+      <div [ngClass]="getClassNames('dndPlaceholder')" dndPlaceholderRef>Place item here</div>
+    </ng-template>
+
     <ng-container *ngFor="let rule of data.rules; let i = index">
       <ng-container
         *ngIf="{
@@ -100,7 +113,7 @@
           invalid: !config.allowEmptyRulesets && rule.rules && rule.rules.length === 0
         } as local"
       >
-        <li [ngClass]="getQueryItemClassName(local)">
+        <li [ngClass]="getQueryItemClassName(local)" [dndDraggable]="rule">
           <ng-container *ngIf="!local.ruleset">
             <ng-container *ngIf="getRemoveButtonTemplate() as template; else defaultRemoveButton">
               <div [ngClass]="getClassNames('buttonGroup', 'rightAlign')">
@@ -266,6 +279,25 @@
               </div>
             </ng-template>
           </ng-container>
+          <ng-container *ngIf="getDragHandlerTemplate() as template; else defaultDragHandler">
+            <ng-container
+              *ngTemplateOutlet="template; context: getDragHandlerContext()"
+            ></ng-container>
+          </ng-container>
+
+          <ng-template #defaultDragHandler>
+            <div [ngClass]="getClassNames('dragHandlerControlSize')">
+              <div dndHandle>
+                <svg width="1em" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M10 9h4V6h3l-5-5-5 5h3v3zm-1 1H6V7l-5 5 5 5v-3h3v-4zm14 2l-5-5v3h-3v4h3v3l5-5zm-9 3h-4v3H7l5 5 5-5h-3v-3z"
+                  ></path>
+                  <path d="M0 0h24v24H0z" fill="none"></path>
+                </svg>
+              </div>
+            </div>
+          </ng-template>
+
           <query-builder
             *ngIf="local.ruleset"
             [data]="rule"
@@ -281,7 +313,10 @@
             [parentRemoveButtonTemplate]="parentRemoveButtonTemplate || removeButtonTemplate"
             [parentEmptyWarningTemplate]="parentEmptyWarningTemplate || emptyWarningTemplate"
             [parentArrowIconTemplate]="parentArrowIconTemplate || arrowIconTemplate"
+            [parentDragHandlerTemplate]="parentDragHandlerTemplate || dragHandlerTemplate"
+            [parentDndPlaceholderTemplate]="parentDndPlaceholderTemplate || dndPlaceholderTemplate"
             [parentValue]="data"
+            [mainValue]="mainValue || data"
             [classNames]="classNames"
             [config]="config"
             [allowRuleset]="allowRuleset"

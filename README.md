@@ -13,8 +13,8 @@ https://github.com/raysuelzer/ngx-angular-query-builder/blob/main/projects/ngx-a
 ## Branches
 
 - Main should be the latest / highest version.
-- feature/* is where changes are staged before being merged
-- versions/* are the different versions for the angular packages ie. version 16 is versions/16.x.
+- feature/\* is where changes are staged before being merged
+- versions/\* are the different versions for the angular packages ie. version 16 is versions/16.x.
 
 # Versions
 

@@ -1,6 +1,7 @@
 import { ValidationErrors } from "@angular/forms";
 
 export interface RuleSet {
+  id?: number;
   condition: string;
   rules: Array<RuleSet | Rule | any>;
   collapsed?: boolean;
@@ -8,6 +9,7 @@ export interface RuleSet {
 }
 
 export interface Rule {
+  id?: number;
   field: string;
   value?: any;
   operator?: string;
@@ -84,6 +86,8 @@ export interface QueryBuilderClassNames {
   operatorControlSize?: string;
   inputControl?: string;
   inputControlSize?: string;
+  dragHandlerControlSize?: string;
+  dndPlaceholder?: string;
 }
 
 export interface QueryBuilderConfig {
@@ -115,6 +119,10 @@ export interface EmptyWarningContext {
 
 export interface ArrowIconContext {
   getDisabledState: () => boolean;
+  $implicit: RuleSet;
+}
+
+export interface DragHandlerContext {
   $implicit: RuleSet;
 }
 

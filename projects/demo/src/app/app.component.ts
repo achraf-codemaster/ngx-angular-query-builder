@@ -42,6 +42,8 @@ export class AppComponent {
     inputControlSize: "col-auto"
   };
 
+  objectKeys = Object.keys;
+
   public query = {
     condition: "and",
     rules: [
